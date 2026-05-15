@@ -15,7 +15,7 @@ st.sidebar.divider()
 st.sidebar.markdown("**Tech Stack:**")
 st.sidebar.markdown("- CrewAI + GPT-4")
 st.sidebar.markdown("- LangGraph")
-st.sidebar.markdown("- LangChain + ChromaDB")
+st.sidebar.markdown("- LangChain + FAISS")
 st.sidebar.markdown("- Streamlit + Plotly")
 
 if tab_selection == "Loan Dashboard":
@@ -127,27 +127,27 @@ elif tab_selection == "RAG Policy QA":
     st.title("RAG Pipeline - Policy Document QA")
     st.markdown("Ask questions about OLA/ILPA compliance guidelines")
     st.divider()
-    st.info("Knowledge base: NetCredit loan policies + OLA/ILPA guidelines stored in ChromaDB")
+    st.info("Knowledge base: NetCredit loan policies + OLA/ILPA guidelines stored in FAISS vector store")
     sample_questions = ["What is the minimum credit score required?", "What happens to borrowers with recent bankruptcy?", "What is the maximum DTI ratio allowed?", "What are the interest rates for different risk tiers?", "How long does high risk application processing take?", "What is the cooling off period for loans?", "What are the loan limits by credit tier?"]
     st.subheader("Try these questions:")
     selected = st.selectbox("Select a sample question:", [""] + sample_questions)
     user_question = st.text_input("Or type your own question:", value=selected)
     if st.button("Search Policy", type="primary") and user_question:
-        with st.spinner("Searching ChromaDB and generating answer..."):
+        with st.spinner("Searching knowledge base and generating answer..."):
             try:
-                from langchain_community.vectorstores import Chroma
                 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
                 from langchain_core.runnables import RunnablePassthrough
                 from langchain_core.output_parsers import StrOutputParser
                 from langchain_core.prompts import ChatPromptTemplate
                 from langchain_community.document_loaders import TextLoader
                 from langchain_text_splitters import RecursiveCharacterTextSplitter
+                from langchain_community.vectorstores import FAISS
                 embeddings = OpenAIEmbeddings()
                 loader = TextLoader("rag/docs/netcredit_policies.txt")
                 documents = loader.load()
                 splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
                 chunks = splitter.split_documents(documents)
-                vectorstore = Chroma.from_documents(documents=chunks, embedding=embeddings)
+                vectorstore = FAISS.from_documents(chunks, embeddings)
                 retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
                 prompt = ChatPromptTemplate.from_template("Answer based on context.\nContext: {context}\nQuestion: {question}\nAnswer:")
                 llm = ChatOpenAI(model="gpt-4o-mini")
@@ -158,7 +158,7 @@ elif tab_selection == "RAG Policy QA":
                 st.success(answer)
                 col1, col2, col3 = st.columns(3)
                 col1.info("Step 1: Question embedded into vector")
-                col2.info("Step 2: Top 3 chunks retrieved from ChromaDB")
+                col2.info("Step 2: Top 3 chunks retrieved from FAISS")
                 col3.info("Step 3: GPT-4o-mini generated answer")
             except Exception as e:
                 st.error(f"Error: {str(e)}")
@@ -198,7 +198,7 @@ elif tab_selection == "CrewAI Agents":
         st.markdown("- **CrewAI** - Multi-agent orchestration")
         st.markdown("- **LangGraph** - Stateful workflow 6 stages")
         st.markdown("- **LangChain** - RAG pipeline")
-        st.markdown("- **ChromaDB** - Vector database")
+        st.markdown("- **FAISS** - Vector database")
     with col2:
         st.markdown("- **GPT-4 / GPT-4o** - LLM backbone")
         st.markdown("- **Azure SQL** - Data storage")
