@@ -1,14 +1,12 @@
 ﻿import os
 from dotenv import load_dotenv
 load_dotenv()
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 from data.borrowers import borrowers, quick_decision
 
 st.set_page_config(page_title="NetCredit AI Portfolio", page_icon="🏦", layout="wide")
-
 st.sidebar.title("NetCredit AI System")
 st.sidebar.markdown("**Built by Vamsi Sadam**")
 st.sidebar.divider()
@@ -142,16 +140,15 @@ elif tab_selection == "RAG Policy QA":
                 from langchain_core.runnables import RunnablePassthrough
                 from langchain_core.output_parsers import StrOutputParser
                 from langchain_core.prompts import ChatPromptTemplate
+                from langchain_community.document_loaders import TextLoader
+                from langchain_text_splitters import RecursiveCharacterTextSplitter
                 embeddings = OpenAIEmbeddings()
-		# Build ChromaDB from documents on the fly
-		from langchain_community.document_loaders import TextLoader
-		from langchain_text_splitters import RecursiveCharacterTextSplitter
-		loader = TextLoader("rag/docs/netcredit_policies.txt")
-		documents = loader.load()
-		splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-		chunks = splitter.split_documents(documents)
-		vectorstore = Chroma.from_documents(documents=chunks, embedding=embeddings)
-		retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+                loader = TextLoader("rag/docs/netcredit_policies.txt")
+                documents = loader.load()
+                splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+                chunks = splitter.split_documents(documents)
+                vectorstore = Chroma.from_documents(documents=chunks, embedding=embeddings)
+                retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
                 prompt = ChatPromptTemplate.from_template("Answer based on context.\nContext: {context}\nQuestion: {question}\nAnswer:")
                 llm = ChatOpenAI(model="gpt-4o-mini")
                 qa_chain = ({"context": retriever, "question": RunnablePassthrough()} | prompt | llm | StrOutputParser())
@@ -212,4 +209,3 @@ elif tab_selection == "CrewAI Agents":
 
 st.divider()
 st.caption("Built by Vamsi Sadam | NetCredit Agentic AI System | CrewAI + LangGraph + RAG + Streamlit")
-
