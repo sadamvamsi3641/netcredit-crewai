@@ -4,3 +4,9 @@ python-dotenv
 streamlit
 plotly
 pandas
+langchain
+langchain-community
+langchain-openai
+langchain-core
+langchain-text-splitters
+chromadb
